@@ -1,0 +1,3489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カウンセリング対話コーパスビューア(TU-OCDC Viewer)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+            font-size: 2.2em;
+        }
+        
+        .file-input-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            padding: 10px 15px;
+            border: 2px dashed #2c5aa0;
+            border-radius: 8px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .sample-data-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        
+        .sample-data-btn:hover {
+            background: #218838;
+        }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .media-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .conversation-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .analysis-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: #2c5aa0;
+            border-bottom-color: #2c5aa0;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #232738 0%, #46414f 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card_ang{
+            background: linear-gradient(135deg, #c62828 0%, #e137bf 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card_sad{
+            background: linear-gradient(135deg, #1805a4 0%, #3faff4 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card_joy{
+            background: linear-gradient(135deg, #009b3e 0%, #2cf630 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .russell-circle {
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            background: linear-gradient(45deg, 
+                rgba(255,99,132,0.1) 0%, 
+                rgba(255,206,84,0.1) 25%, 
+                rgba(75,192,192,0.1) 50%, 
+                rgba(153,102,255,0.1) 75%);
+        }
+        
+        .russell-axis {
+            position: absolute;
+            background: #ccc;
+        }
+        
+        .russell-axis.horizontal {
+            width: 100%;
+            height: 1px;
+            top: 50%;
+            left: 0;
+        }
+        
+        .russell-axis.vertical {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+        }
+        
+        .russell-labels {
+            position: absolute;
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+        
+        .russell-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .russell-point:hover {
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+        
+        .russell-point.participant {
+            background: #ff6b6b;
+            border: 2px solid #fff;
+        }
+        
+        .russell-point.counselor {
+            background: #4ecdc4;
+            border: 2px solid #fff;
+        }
+        
+        .russell-point.active {
+            transform: translate(-50%, -50%) scale(1.5);
+            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.5);
+        }
+        
+        /* 頻出語分析のスタイル */
+        .word-analysis-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .morphology-status {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: #1976d2;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .morphology-status.ready {
+            background: #e8f5e8;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        
+        .morphology-status.loading {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #f57c00;
+        }
+        
+        .morphology-toggle {
+            background: #2c5aa0;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .morphology-toggle:hover {
+            background: #1e3d6f;
+        }
+        
+        .morphology-toggle.active {
+            background: #28a745;
+        }
+        
+        .speaker-filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .speaker-filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #2c5aa0;
+            background: white;
+            color: #2c5aa0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .speaker-filter-btn.active {
+            background: #2c5aa0;
+            color: white;
+        }
+        
+        .word-count-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 80px;
+        }
+        
+        .russell-word-plot {
+            width: 400px;
+            height: 400px;
+            margin: 20px auto;
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            background: linear-gradient(45deg, 
+                rgba(255,99,132,0.05) 0%, 
+                rgba(255,206,84,0.05) 25%, 
+                rgba(75,192,192,0.05) 50%, 
+                rgba(153,102,255,0.05) 75%);
+        }
+        
+        .word-point {
+            position: absolute;
+            background: rgba(44, 90, 160, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        
+        .word-point:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .word-point.participant {
+            background: rgba(255, 107, 107, 0.9);
+        }
+        
+        .word-point.counselor {
+            background: rgba(78, 205, 196, 0.9);
+        }
+        
+        .word-point.both {
+            background: linear-gradient(45deg, rgba(255, 107, 107, 0.9), rgba(78, 205, 196, 0.9));
+        }
+        
+        .quadrant-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .quadrant-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .quadrant-card.q1 {
+            border-color: #ff6b6b;
+        }
+        
+        .quadrant-card.q2 {
+            border-color: #feca57;
+        }
+        
+        .quadrant-card.q3 {
+            border-color: #48dbfb;
+        }
+        
+        .quadrant-card.q4 {
+            border-color: #1dd1a1;
+        }
+        
+        .quadrant-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .quadrant-title.q1 {
+            color: #ff6b6b;
+        }
+        
+        .quadrant-title.q2 {
+            color: #feca57;
+        }
+        
+        .quadrant-title.q3 {
+            color: #48dbfb;
+        }
+        
+        .quadrant-title.q4 {
+            color: #1dd1a1;
+        }
+        
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .word-chip {
+            background: #f8f9fa;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+        
+        .filter-select, .filter-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .conversation-view {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .message.participant {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .message.participant .message-avatar {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+        
+        .message.counselor .message-avatar {
+            background: linear-gradient(135deg, #4ecdc4, #00b894);
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .message.participant .message-content {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.counselor .message-content {
+            background: #e9ecef;
+            color: #333;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message-content:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .message-text {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .message-meta {
+            font-size: 11px;
+            opacity: 0.7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .message-time {
+            font-family: monospace;
+        }
+        
+        .message-scores {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .score-chip {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+        
+        .message.counselor .score-chip {
+            background: rgba(0,0,0,0.1);
+        }
+        
+        .message.active {
+            background: rgba(44, 90, 160, 0.1);
+            border-radius: 10px;
+            padding: 5px;
+        }
+        
+        .search-highlight {
+            background: yellow;
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        
+        .media-player {
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .media-player video {
+            width: 100%;
+            height: auto;
+            min-height: 200px;
+            max-height: 300px;
+            display: block;
+            background: #000;
+        }
+        
+        .media-player audio {
+            width: 100%;
+            height: 60px;
+            display: block;
+            margin-top: 10px;
+        }
+        
+        .media-controls {
+            background: #2c5aa0;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-size: 12px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .control-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            cursor: not-allowed;
+        }
+        
+        .control-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        .media-type-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .media-type-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        .time-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .progress-indicator {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #2c5aa0;
+            transition: width 0.1s ease;
+        }
+        
+        .info-section {
+            background: #f8f9ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .info-section h3 {
+            color: #2c5aa0;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        
+        .info-item {
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-size: 1.1em;
+        }
+        
+        .loading-indicator {
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .segment-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(44, 90, 160, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .clickable-point {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .clickable-point:hover {
+            transform: scale(1.2);
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .conversation-section {
+                order: 2;
+            }
+            
+            .russell-circle, .russell-word-plot {
+                width: 250px;
+                height: 250px;
+            }
+        }
+        
+        /* 表情分析関連のスタイル */
+        .face-analysis-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .face-status {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: #1976d2;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .face-status.loaded {
+            background: #e8f5e8;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        
+        .face-status.error {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        
+        .face-status.no-data {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #f57c00;
+        }
+        
+        .face-visualization {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chart-section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .chart-section h4 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .au-heatmap-section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .au-heatmap-section h4 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .au-heatmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .au-cell {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .au-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .au-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .au-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c5aa0;
+        }
+        
+        .emotion-radar {
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .face-analysis-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .au-heatmap {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filters, .word-analysis-controls {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .tabs {
+                justify-content: flex-start;
+                overflow-x: auto;
+            }
+            
+            .quadrant-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 徳島大学オンラインカウンセリング対話コーパス（TU-OCDC）</h1>
+            <div class="file-input-section">
+                <input type="file" id="fileInput" accept=".jsonl" class="file-input" />
+                <button class="sample-data-btn" id="sampleDataBtn">サンプルデータを読み込み</button>
+            </div>
+            <p>JSONLファイルを選択するか、サンプルデータで高度な分析機能を体験してください。</p>
+        </div>
+        
+        <div class="main-layout">
+            <div class="media-section">
+                <div class="info-section">
+                    <h3>📁 ファイル情報</h3>
+                    <div class="info-item">
+                        <span class="info-label">ID:</span>
+                        <span id="fileId">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">セグメント数:</span>
+                        <span id="segmentCount">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">現在のセグメント:</span>
+                        <span id="currentSegmentInfo">-</span>
+                    </div>
+                </div>
+                
+                <div class="media-player" id="mediaPlayer">
+                    <div class="no-data">
+                        📁 JSONLファイルを読み込んでください
+                    </div>
+                </div>
+                
+                <div class="media-controls">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="media-type-btn" id="videoBtn">📹 動画</button>
+                        <button class="media-type-btn active" id="audioBtn">🎵 音声</button>
+                    </div>
+                    <button class="control-btn" id="playPauseBtn" disabled>▶️ 再生</button>
+                    <button class="control-btn" id="prevBtn" disabled>⏮️ 前のセグメント</button>
+                    <button class="control-btn" id="nextBtn" disabled>⏭️ 次のセグメント</button>
+                    <button class="control-btn" id="playCurrentBtn" disabled>🎯 現在セグメント再生</button>
+                    <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+                    <div class="progress-indicator">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="conversation-section">
+                <h3 style="color: #2c5aa0; margin-bottom: 20px;">💬 会話ビュー</h3>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <div class="filter-label">話者</div>
+                        <select class="filter-select" id="speakerFilter">
+                            <option value="">全て</option>
+                            <option value="participant">参加者</option>
+                            <option value="counselor">カウンセラー</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-label">感情</div>
+                        <select class="filter-select" id="emotionFilter">
+                            <option value="">全て</option>
+                            <option value="平静">平静</option>
+                            <option value="幸福">幸福</option>
+                            <option value="明るい">明るい</option>
+                            <option value="興奮">興奮</option>
+                            <option value="驚き">驚き</option>
+                            <option value="警戒">警戒</option>
+                            <option value="恐れ">恐れ</option>
+                            <option value="悩み">悩み</option>
+                            <option value="不愉快">不愉快</option>
+                            <option value="抑圧">抑圧</option>
+                            <option value="憂鬱">憂鬱</option>
+                            <option value="退屈">退屈</option>
+                            <option value="疲れ">疲れ</option>
+                            <option value="眠気">眠気</option>
+                            <option value="リラックス">リラックス</option>
+                            <option value="気楽">気楽</option>
+                            <option value="満足">満足</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-label">キーワード検索</div>
+                        <input type="text" class="filter-input" id="keywordSearch" placeholder="発話内容を検索...">
+                    </div>
+                
+                </div>
+                
+                <div class="conversation-view" id="conversationView">
+                    <div class="no-data">データが読み込まれていません</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="analysis-section">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('overview')">📊 概要</button>
+                <button class="tab" onclick="switchTab('russell')">🎯 Russell</button>
+                <button class="tab" onclick="switchTab('trends')">📈 推移</button>
+                <button class="tab" onclick="switchTab('words')">📝 頻出語</button>
+                <button class="tab" onclick="switchTab('face')">🎭 感情分析</button>
+            </div>
+            
+            <div id="overview-tab" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">平均覚醒度</div>
+                        <div class="stat-value" id="avgArousal">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">平均感情価</div>
+                        <div class="stat-value" id="avgValence">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">平均ストレス</div>
+                        <div class="stat-value" id="avgStress">-</div>
+                    </div>
+                    <div class="stat-card_sad">
+                        <div class="stat-label">音声感情（悲しみ）</div>
+                        <div class="stat-value" id="avgAudioSad">-</div>
+                    </div>
+                    <div class="stat-card_joy">
+                        <div class="stat-label">音声感情（喜び）</div>
+                        <div class="stat-value" id="avgAudioHap">-</div>
+                    </div>
+                    <div class="stat-card_ang">
+                        <div class="stat-label">音声感情（怒り）</div>
+                        <div class="stat-value" id="avgAudioAng">-</div>
+                    </div>
+                    <div class="stat-card_sad">
+                        <div class="stat-label">テキスト感情（悲しみ）</div>
+                        <div class="stat-value" id="avgTextSad">-</div>
+                    </div>
+                    <div class="stat-card_joy">
+                        <div class="stat-label">テキスト感情（喜び）</div>
+                        <div class="stat-value" id="avgTextJoy">-</div>
+                    </div>
+                    <div class="stat-card_ang">
+                        <div class="stat-label">テキスト感情（怒り）</div>
+                        <div class="stat-value" id="avgTextAnger">-</div>
+                    </div>
+
+                    <div class="stat-card_sad">
+                        <div class="stat-label">表情（悲しみ）</div>
+                        <div class="stat-value" id="avgFaceSad">-</div>
+                    </div>
+                    <div class="stat-card_joy">
+                        <div class="stat-label">表情（喜び）</div>
+                        <div class="stat-value" id="avgFaceHap">-</div>
+                    </div>
+                    <div class="stat-card_ang">
+                        <div class="stat-label">表情（怒り）</div>
+                        <div class="stat-value" id="avgFaceAnger">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="russell-tab" class="tab-content">
+                <div class="russell-circle" id="russellCircle">
+                    <div class="russell-axis horizontal"></div>
+                    <div class="russell-axis vertical"></div>
+                    <div class="russell-labels" style="top: 10px; left: 50%; transform: translateX(-50%);">高覚醒</div>
+                    <div class="russell-labels" style="bottom: 10px; left: 50%; transform: translateX(-50%);">低覚醒</div>
+                    <div class="russell-labels" style="left: 10px; top: 50%; transform: translateY(-50%);">不快</div>
+                    <div class="russell-labels" style="right: 10px; top: 50%; transform: translateY(-50%);">快</div>
+                </div>
+            </div>
+            
+            <div id="trends-tab" class="tab-content">
+                <div class="chart-container">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
+            
+            <div id="words-tab" class="tab-content">
+                <div class="word-analysis-controls">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="font-size: 12px; font-weight: bold;">分析対象:</span>
+                        <span style="background: #2c5aa0; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                            参加者のみ
+                        </span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="font-size: 12px; font-weight: bold;">表示単語数:</span>
+                        <input type="number" class="word-count-input" id="wordCountInput" value="20" min="5" max="50">
+                    </div>
+                    <div class="morphology-status" id="morphologyStatus">
+                        <span>🔧 形態素解析: 初期化中...</span>
+                    </div>
+                    <button class="morphology-toggle" id="morphologyToggle" title="形態素解析のON/OFF切り替え">
+                        形態素解析: OFF
+                    </button>
+                </div>
+                
+                <div class="russell-word-plot" id="russellWordPlot">
+                    <div class="russell-axis horizontal"></div>
+                    <div class="russell-axis vertical"></div>
+                    <div class="russell-labels" style="top: 10px; left: 50%; transform: translateX(-50%);">高覚醒</div>
+                    <div class="russell-labels" style="bottom: 10px; left: 50%; transform: translateX(-50%);">低覚醒</div>
+                    <div class="russell-labels" style="left: 10px; top: 50%; transform: translateY(-50%);">不快</div>
+                    <div class="russell-labels" style="right: 10px; top: 50%; transform: translateY(-50%);">快</div>
+                </div>
+                
+                <div class="quadrant-stats">
+                    <div class="quadrant-card q2">
+                        <div class="quadrant-title q2">第2象限 (高覚醒・不快)</div>
+                        <div class="word-list" id="q2Words"></div>
+                    </div>
+                    <div class="quadrant-card q1">
+                        <div class="quadrant-title q1">第1象限 (高覚醒・快)</div>
+                        <div class="word-list" id="q1Words"></div>
+                    </div>
+                    <div class="quadrant-card q3">
+                        <div class="quadrant-title q3">第3象限 (低覚醒・不快)</div>
+                        <div class="word-list" id="q3Words"></div>
+                    </div>
+                    <div class="quadrant-card q4">
+                        <div class="quadrant-title q4">第4象限 (低覚醒・快)</div>
+                        <div class="word-list" id="q4Words"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="face-tab" class="tab-content">
+                <div class="face-analysis-controls">
+                    <div class="face-status" id="faceStatus">
+                        <span>🎭 感情分析データ: 未読み込み</span>
+                    </div>
+                </div>
+                
+                <div class="face-visualization" id="faceVisualization">
+                    <div class="no-data">JSONLファイルから感情分析データを読み込みます</div>
+                </div>
+                
+                <div class="face-charts" id="faceCharts" style="display: none;">
+                    <div class="chart-section">
+                        <h4>🎭 顔面感情表現 (7つの基本感情)</h4>
+                        <div class="chart-container">
+                            <canvas id="faceEmotionChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>🎵 音声感情分析</h4>
+                        <div class="chart-container">
+                            <canvas id="audioEmotionChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>🗒️テキスト感情分析（８感情）</h4>
+                        <div class="chart-container">
+                            <canvas id="textEmotionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-section">
+                        <h4>🗒️テキスト感情分析(感情極性値)</h4>
+                        <div class="chart-container">
+                            <canvas id="textSentimentChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>🧭 顔の向き (Pitch, Roll, Yaw)</h4>
+                        <div class="chart-container">
+                            <canvas id="headPoseChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>💪 アクションユニット (上位10個)</h4>
+                        <div class="chart-container">
+                            <canvas id="actionUnitChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="au-heatmap-section">
+                        <h4>🔥 アクションユニット ヒートマップ</h4>
+                        <div class="au-heatmap" id="auHeatmap"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let currentData = null;
+        let currentVideoElement = null;
+        let currentAudioElement = null;
+        let currentSegmentIndex = 0;
+        let isPlaying = false;
+        let segments = [];
+        let filteredSegments = [];
+        let segmentMapping = []; // フィルター後のインデックスと元のインデックスのマッピング
+        let currentMediaMode = 'audio'; // video, audio
+        let mediaFiles = { video: null, audio: null };
+        let trendsChart = null;
+        let segmentPlaybackTimeout = null;
+
+        // 表情分析関連変数
+        let faceAnalysisData = [];
+        let faceEmotionChart = null;
+        let audioEmotionChart = null;
+        let textEmotionChart = null;
+        let textSentimentChart = null;
+        let headPoseChart = null;
+        let actionUnitChart = null;
+        
+        // アクションユニットの名前マッピング
+        const actionUnitNames = {
+            'AU01': 'インナー眉上げ',
+            'AU02': 'アウター眉上げ',
+            'AU04': '眉寄せ',
+            'AU05': '上まぶた上げ',
+            'AU06': '頬上げ',
+            'AU07': 'まぶた締め',
+            'AU09': '鼻しわ寄せ',
+            'AU10': '上唇上げ',
+            'AU11': '口角溝深め',
+            'AU12': '口角上げ',
+            'AU14': 'えくぼ',
+            'AU15': '口角下げ',
+            'AU17': 'あご上げ',
+            'AU20': '口角横拡張',
+            'AU23': '唇締め',
+            'AU24': '唇すぼめ',
+            'AU25': '唇分離',
+            'AU26': '顎下げ',
+            'AU28': '唇吸込み',
+            'AU43': '目閉じ'
+        };
+        
+        // 感情の日本語名マッピング
+        const emotionNames = {
+            'anger': '怒り',
+            'disgust': '嫌悪',
+            'fear': '恐怖',
+            'happiness': '幸福',
+            'sadness': '悲しみ',
+            'surprise': '驚き',
+            'neutral': '中性'
+        };
+
+        // 音声感情の日本語名マッピング
+        const audioEmotionNames = {
+            'angry': '怒り',
+            'happy': '幸福',
+            'sad': '悲しみ',
+            'neutral': '中性'
+        };
+        // テキスト感情の日本語名マッピング
+        const textEmotionNames = {
+            'joy': '喜び',
+            'sadness': '悲しみ',
+            'anticipation': '期待',
+            'surprise': '驚き',
+            'anger': '怒り',
+            'fear': '恐れ',
+            'disgust': '嫌悪',
+            'trust': '信頼'
+        };
+
+        // 表情分析データ処理
+        function processFaceAnalysisData() {
+            console.log('=== 表情分析データ処理開始 ===');
+            
+            faceAnalysisData = [];
+            let hasValidData = false;
+            
+            segments.forEach((segment, index) => {
+                const faceData = {
+                    segmentIndex: index,
+                    timestamp: segment.start,
+                    speaker: segment.speaker,
+                    // 音声感情
+                    audioEmotions: {},
+                    // テキスト感情
+                    textEmotions: {},
+                    // テキストポジネガ
+                    textSentiment: 0,
+
+                    // 顔面感情
+                    faceEmotions: {},
+
+                    // 顔の向き
+                    headPose: {},
+                    // アクションユニット
+                    actionUnits: {}
+                };
+                
+                // 音声感情データの解析
+                if (segment.audio_emotion) {
+                    try {
+                        const audioEmotions = segment.audio_emotion.split(' ');
+                        audioEmotions.forEach(emotionStr => {
+                            const [emotion, value] = emotionStr.split(':');
+                            if (emotion && value !== undefined) {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    faceData.audioEmotions[emotion] = numValue;
+                                    hasValidData = true;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('音声感情データ解析エラー:', error, segment.audio_emotion);
+                    }
+                }
+                // 言語感情データの解析
+                if (segment.text_emotion) {
+                    try {
+                        const textEmotions = segment.text_emotion.split(' ');
+                        textEmotions.forEach(emotionStr => {
+                            const [emotion, value] = emotionStr.split(':');
+                            if (emotion && value !== undefined && value !== 'nan') {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    faceData.textEmotions[emotion] = numValue;
+                                    hasValidData = true;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('テキスト感情データ解析エラー:', error, segment.text_emotion);
+                    }
+                }
+                // 言語感情データ(posi-nega)の解析
+                if (segment.text_sentiment) {
+                    try {
+                        const textSentiment = segment.text_sentiment;
+                        const numValue = parseFloat(textSentiment);
+                        if (!isNaN(numValue)){
+                            faceData.textSentiment = numValue;
+                            hasValidData = true;
+                        }
+                    } catch (error) {
+                        console.warn('テキストポジネガ感情データ解析エラー:', error, segment.text_sentiment);
+                    }
+                }
+
+                // 顔面感情データの解析
+                if (segment.face_emotion) {
+                    try {
+                        const faceEmotions = segment.face_emotion.split(' ');
+                        faceEmotions.forEach(emotionStr => {
+                            const [emotion, value] = emotionStr.split(':');
+                            if (emotion && value !== undefined && value !== 'nan') {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    faceData.faceEmotions[emotion] = numValue;
+                                    hasValidData = true;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('顔面感情データ解析エラー:', error, segment.face_emotion);
+                    }
+                }
+                
+                // 顔の向きデータの解析
+                if (segment.pitch_roll_yaw) {
+                    try {
+                        const poseData = segment.pitch_roll_yaw.split(' ');
+                        poseData.forEach(poseStr => {
+                            const [axis, value] = poseStr.split(':');
+                            if (axis && value !== undefined && value !== 'nan') {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    faceData.headPose[axis] = numValue;
+                                    hasValidData = true;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('顔の向きデータ解析エラー:', error, segment.pitch_roll_yaw);
+                    }
+                }
+                
+                // アクションユニットデータの解析
+                if (segment.AU) {
+                    try {
+                        const auData = segment.AU.split(' ');
+                        auData.forEach(auStr => {
+                            const [au, value] = auStr.split(':');
+                            if (au && value !== undefined && value !== 'nan') {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    faceData.actionUnits[au] = numValue;
+                                    hasValidData = true;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('アクションユニットデータ解析エラー:', error, segment.AU);
+                    }
+                }
+                
+                faceAnalysisData.push(faceData);
+            });
+            
+            console.log('感情分析データ処理完了:', faceAnalysisData.length, '件');
+            console.log('有効データ:', hasValidData);
+            
+            if (hasValidData) {
+                updateFaceStatus('loaded', `✅ 表情分析データ: ${faceAnalysisData.length}件処理完了`);
+                displayFaceVisualization();
+            } else {
+                updateFaceStatus('no-data', '⚠️ 表情分析データ: 有効なデータが見つかりません');
+            }
+        }
+        
+        // 表情分析ステータス更新
+        function updateFaceStatus(status, message) {
+            const statusElement = document.getElementById('faceStatus');
+            statusElement.textContent = message;
+            statusElement.className = `face-status ${status}`;
+        }
+        
+        // 表情分析可視化表示
+        function displayFaceVisualization() {
+            console.log('=== 表情分析可視化表示開始 ===');
+            
+            document.getElementById('faceVisualization').style.display = 'none';
+            document.getElementById('faceCharts').style.display = 'block';
+            
+            createFaceEmotionChart();
+            createAudioEmotionChart();
+            createTextEmotionChart();
+            createTextSentimentChart();
+            createHeadPoseChart();
+            createActionUnitChart();
+            createAUHeatmap();
+        }
+        
+        // 顔面感情チャート作成
+        function createFaceEmotionChart() {
+            console.log('=== 顔面感情チャート作成 ===');
+            
+            const ctx = document.getElementById('faceEmotionChart').getContext('2d');
+            
+            if (faceEmotionChart) {
+                faceEmotionChart.destroy();
+            }
+            
+            const emotions = ['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise', 'neutral'];
+            const colors = ['#ff6b6b', '#8e44ad', '#34495e', '#f1c40f', '#3498db', '#e67e22', '#95a5a6'];
+            
+            const datasets = emotions.map((emotion, index) => ({
+                label: emotionNames[emotion],
+                data: faceAnalysisData.map(row => row.faceEmotions[emotion] || 0),
+                borderColor: colors[index],
+                backgroundColor: colors[index] + '20',
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }));
+            
+            faceEmotionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: faceAnalysisData.map((_, index) => `${index + 1}`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: '感情強度'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'セグメント'
+                            }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            jumpToSegment(index);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 音声感情チャート作成
+        function createAudioEmotionChart() {
+            console.log('=== 音声感情チャート作成 ===');
+            
+            const ctx = document.getElementById('audioEmotionChart').getContext('2d');
+            
+            if (audioEmotionChart) {
+                audioEmotionChart.destroy();
+            }
+            
+            const emotions = ['angry', 'happy', 'sad', 'neutral'];
+            const colors = ['#ff6b6b', '#f1c40f', '#3498db', '#95a5a6'];
+            
+            const datasets = emotions.map((emotion, index) => ({
+                label: audioEmotionNames[emotion],
+                data: faceAnalysisData.map(row => row.audioEmotions[emotion] || 0),
+                borderColor: colors[index],
+                backgroundColor: colors[index] + '20',
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }));
+            
+            audioEmotionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: faceAnalysisData.map((_, index) => `${index + 1}`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: '感情強度'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'セグメント'
+                            }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            jumpToSegment(index);
+                        }
+                    }
+                }
+            });
+        }
+
+        // テキスト感情チャート作成
+        function createTextEmotionChart() {
+            console.log('=== テキスト感情チャート作成 ===');
+            
+            const ctx = document.getElementById('textEmotionChart').getContext('2d');
+            
+            if (textEmotionChart) {
+                textEmotionChart.destroy();
+            }
+            
+            const emotions = ['joy', 'sadness', 'anticipation', 'surprise','anger', 'fear', 'disgust', 'trust'];
+            //const colors = ['#ff6b6b', '#f1c40f', '#3498db', '#95a5a6'];
+            const colors = [
+                            '#ff6b6b', // joy (喜び)
+                            '#4a90e2', // sadness (悲しみ)
+                            '#f39c12', // anticipation (期待)
+                            '#f1c40f', // surprise (驚き)
+                            '#e74c3c', // anger (怒り)
+                            '#8e44ad', // fear (恐れ)
+                            '#2ecc71', // disgust (嫌悪)
+                            '#3498db'  // trust (信頼)
+                            ];
+            
+            const datasets = emotions.map((emotion, index) => ({
+                label: textEmotionNames[emotion],
+                data: faceAnalysisData.map(row => row.textEmotions[emotion] || 0),
+                borderColor: colors[index],
+                backgroundColor: colors[index] + '20',
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }));
+            
+            textEmotionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: faceAnalysisData.map((_, index) => `${index + 1}`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: '感情強度'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'セグメント'
+                            }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            jumpToSegment(index);
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // テキストpojinega感情チャート作成
+        function createTextSentimentChart() {
+            console.log('=== テキストPosi-Nega-感情チャート作成 ===');
+            const ctx = document.getElementById('textSentimentChart').getContext('2d');
+            
+            if (textSentimentChart) {
+                textSentimentChart.destroy();
+            }
+           const emotions = ['sentiment']//, 'sadness', 'anticipation', 'surprise','anger', 'fear', 'disgust', 'trust'];
+            //const colors = ['#ff6b6b', '#f1c40f', '#3498db', '#95a5a6'];
+            const colors = [
+                            //'#ff6b6b', // joy (喜び)
+                            //'#4a90e2', // sadness (悲しみ)
+                            //'#f39c12', // anticipation (期待)
+                            //'#f1c40f', // surprise (驚き)
+                            //'#e74c3c', // anger (怒り)
+                            //'#8e44ad', // fear (恐れ)
+                            //'#2ecc71', // disgust (嫌悪)
+                            '#3498db'  // trust (信頼)
+                            ];
+            
+            const datasets = emotions.map((emotion, index) => ({
+                label: 'sentiment',
+                data: faceAnalysisData.map(row => row.textSentiment || 0),
+                borderColor: colors[0], //index],
+                backgroundColor: colors[0] + '20', //index] + '20',
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }));
+            
+            textSentimentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: faceAnalysisData.map((_, index) => `${index + 1}`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: '感情強度'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'セグメント'
+                            }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            jumpToSegment(index);
+                        }
+                    }
+                }
+            }); 
+           
+        }
+
+        
+        // 顔の向きチャート作成
+        function createHeadPoseChart() {
+            console.log('=== 顔の向きチャート作成 ===');
+            
+            const ctx = document.getElementById('headPoseChart').getContext('2d');
+            
+            if (headPoseChart) {
+                headPoseChart.destroy();
+            }
+            
+            headPoseChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: faceAnalysisData.map((_, index) => `${index + 1}`),
+                    datasets: [
+                        {
+                            label: 'Pitch (上下)',
+                            data: faceAnalysisData.map(row => row.headPose.Pitch || null),
+                            borderColor: '#e74c3c',
+                            backgroundColor: '#e74c3c20',
+                            tension: 0.4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Roll (傾き)',
+                            data: faceAnalysisData.map(row => row.headPose.Roll || null),
+                            borderColor: '#2ecc71',
+                            backgroundColor: '#2ecc7120',
+                            tension: 0.4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Yaw (左右)',
+                            data: faceAnalysisData.map(row => row.headPose.Yaw || null),
+                            borderColor: '#3498db',
+                            backgroundColor: '#3498db20',
+                            tension: 0.4,
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '角度 (度)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'セグメント'
+                            }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            jumpToSegment(index);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // アクションユニットチャート作成
+        function createActionUnitChart() {
+            console.log('=== アクションユニットチャート作成 ===');
+            
+            const ctx = document.getElementById('actionUnitChart').getContext('2d');
+            
+            if (actionUnitChart) {
+                actionUnitChart.destroy();
+            }
+            
+            // 各AUの平均値を計算して上位10個を選択
+            const auKeys = Object.keys(actionUnitNames);
+            const auAverages = auKeys.map(au => {
+                const validValues = faceAnalysisData
+                    .map(row => row.actionUnits[au])
+                    .filter(val => val !== undefined && !isNaN(val));
+                
+                const average = validValues.length > 0 ? 
+                    validValues.reduce((sum, val) => sum + val, 0) / validValues.length : 0;
+                
+                return {
+                    au: au,
+                    average: average,
+                    name: actionUnitNames[au],
+                    count: validValues.length
+                };
+            }).filter(item => item.count > 0)
+              .sort((a, b) => b.average - a.average)
+              .slice(0, 10);
+            
+            const colors = [
+                '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+                '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43'
+            ];
+            
+            const datasets = auAverages.map((item, index) => ({
+                label: `${item.au} (${item.name})`,
+                data: faceAnalysisData.map(row => row.actionUnits[item.au] || null),
+                borderColor: colors[index],
+                backgroundColor: colors[index] + '20',
+                tension: 0.4,
+                pointRadius: 2,
+                pointHoverRadius: 5,
+                spanGaps: true
+            }));
+            
+            actionUnitChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: faceAnalysisData.map((_, index) => `${index + 1}`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'AU強度'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'セグメント'
+                            }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            jumpToSegment(index);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // AUヒートマップ作成
+        function createAUHeatmap() {
+            console.log('=== AUヒートマップ作成 ===');
+            
+            const heatmapContainer = document.getElementById('auHeatmap');
+            heatmapContainer.innerHTML = '';
+            
+            const auKeys = Object.keys(actionUnitNames);
+            
+            auKeys.forEach(au => {
+                const validValues = faceAnalysisData
+                    .map(row => row.actionUnits[au])
+                    .filter(val => val !== undefined && !isNaN(val));
+                
+                if (validValues.length === 0) return;
+                
+                const average = validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+                const max = Math.max(...validValues);
+                
+                const cell = document.createElement('div');
+                cell.className = 'au-cell';
+                
+                // 強度に応じて背景色を設定
+                const intensity = average;
+                const hue = (1 - intensity) * 120; // 緑(120)から赤(0)へ
+                cell.style.background = `linear-gradient(135deg, hsl(${hue}, 70%, 85%), hsl(${hue}, 70%, 95%))`;
+                cell.style.borderColor = `hsl(${hue}, 70%, 60%)`;
+                
+                cell.innerHTML = `
+                    <div class="au-name">${au}</div>
+                    <div class="au-name" style="font-size: 10px;">${actionUnitNames[au]}</div>
+                    <div class="au-value">${average.toFixed(3)}</div>
+                    <div style="font-size: 10px; color: #666;">最大: ${max.toFixed(3)}</div>
+                    <div style="font-size: 9px; color: #999;">サンプル数: ${validValues.length}</div>
+                `;
+                
+                cell.title = `${au} (${actionUnitNames[au]})\n平均: ${average.toFixed(3)}\n最大: ${max.toFixed(3)}\nサンプル数: ${validValues.length}`;
+                
+                heatmapContainer.appendChild(cell);
+            });
+        }
+
+        // 日本語ストップワード
+        const japaneseStopwords = new Set([
+            'の', 'に', 'は', 'を', 'が', 'で', 'と', 'て', 'も', 'だ', 'である', 'です', 'ます', 'した', 'して', 'する', 'ある', 'いる', 'なる', 'られる', 'れる', 'せる', 'させる',
+            'こと', 'もの', 'ため', 'よう', 'など', 'それ', 'これ', 'あれ', 'その', 'この', 'あの', 'どの', 'という', 'といった', 'として', 'について', 'により', 'による', 'から', 'まで', 'より', 'では', 'でも', 'しかし', 'けれど', 'けれども', 'だから', 'そして', 'また', 'さらに', 'ただし', 'なお', 'また', 'そこで', 'ところで', 'ちなみに', 'つまり', 'すなわち', 'したがって', 'ゆえに', 'なぜなら', 'というのは', 'なぜならば',
+            'はい', 'いいえ', 'ええ', 'うん', 'そう', 'そうですね', 'そうですか', 'あー', 'うーん', 'えーと', 'あの', 'その', 'この', 'どの', 'はー', 'へー', 'ほー', 'ふーん', 'あっ', 'おっ', 'うっ', 'えっ',
+            '私', 'あなた', '彼', '彼女', '僕', '俺', '君', 'お前', '自分', 'みんな', '皆', '人', '方', '者', '誰', '何', 'どこ', 'いつ', 'どう', 'なぜ', 'どうして', 'どれ', 'どちら', 'どっち',
+            'ちょっと', 'とても', 'すごく', 'かなり', 'だいぶ', 'けっこう', 'わりと', 'そこそこ', 'まあまあ', 'ちゃんと', 'きちんと', 'しっかり', 'ばっちり', 'ぴったり', 'ちょうど', 'まさに', 'きっと', 'おそらく', 'たぶん', 'もしかして', 'もしかすると'
+        ]);
+        
+        // 頻出語分析用変数（早期初期化）
+        let wordFrequencyData = {};
+        let morphologyTokenizer = null;
+        let useMorphology = false;
+
+        // サンプルデータ
+        function loadSampleData() {
+            console.log('=== サンプルデータ読み込み開始 ===');
+            const sampleData = {
+                "segments": [
+                    {
+                        "valence": 0.2,
+                        "arousal": 0.3,
+                        "speaker": "participant",
+                        "emotion": "平静:0.8 期待:0.2",
+                        "start": 11300,
+                        "end": 14900,
+                        "total_score": 95.0,
+                        "avg_score": 1.67,
+                        "file_id": "2301092100",
+                        "text": "おはようございます！私の名前はとくぽんです！今日はよろしくお願いします。楽しい一日になりそうですね。",
+                        "stress_score_avg": 2.5,
+                        "audio_emotion": "angry:0.1 happy:0.8 sad:0.1 neutral:0.0",
+                        "face_emotion": "anger:0.05 disgust:0.02 fear:0.03 happiness:0.85 sadness:0.03 surprise:0.02 neutral:0.0",
+                        "pitch_roll_yaw": "Pitch:5.2 Roll:-2.1 Yaw:1.8",
+                        "AU": "AU01:0.1 AU02:0.05 AU04:0.02 AU05:0.1 AU06:0.8 AU07:0.0 AU09:0.0 AU10:0.0 AU11:0.0 AU12:0.9 AU14:0.0 AU15:0.0 AU17:0.0 AU20:0.0 AU23:0.0 AU24:0.0 AU25:0.1 AU26:0.0 AU28:0.0 AU43:0.0"
+                    },
+                    {
+                        "valence": 0.0,
+                        "arousal": 0.0,
+                        "speaker": "counselor",
+                        "emotion": "平静:1.0",
+                        "start": 15000,
+                        "end": 18500,
+                        "total_score": null,
+                        "avg_score": null,
+                        "file_id": "2301092100",
+                        "text": "こんにちは、とくぽんさん。こちらこそよろしくお願いします。今日はお疲れさまです。リラックスしてお話しましょう。",
+                        "stress_score_avg": null,
+                        "audio_emotion": "angry:0.0 happy:0.6 sad:0.0 neutral:0.4",
+                        "face_emotion": "anger:0.01 disgust:0.01 fear:0.01 happiness:0.5 sadness:0.01 surprise:0.01 neutral:0.45",
+                        "pitch_roll_yaw": "Pitch:2.1 Roll:0.5 Yaw:-0.8",
+                        "AU": "AU01:0.05 AU02:0.02 AU04:0.0 AU05:0.0 AU06:0.3 AU07:0.0 AU09:0.0 AU10:0.0 AU11:0.0 AU12:0.6 AU14:0.0 AU15:0.0 AU17:0.0 AU20:0.0 AU23:0.0 AU24:0.0 AU25:0.05 AU26:0.0 AU28:0.0 AU43:0.0"
+                    },
+                    {
+                        "valence": 0.6,
+                        "arousal": 0.7,
+                        "speaker": "participant",
+                        "emotion": "喜び:0.9 期待:0.1",
+                        "start": 19000,
+                        "end": 22800,
+                        "total_score": 88.5,
+                        "avg_score": 1.85,
+                        "file_id": "2301092100",
+                        "text": "今日はとても良い天気ですね！気持ちがいいです。新しいプロジェクトも始まって楽しみです。頑張って成功させたいと思います。",
+                        "stress_score_avg": 1.8,
+                        "audio_emotion": "angry:0.0 happy:0.9 sad:0.05 neutral:0.05",
+                        "face_emotion": "anger:0.02 disgust:0.01 fear:0.02 happiness:0.92 sadness:0.01 surprise:0.02 neutral:0.0",
+                        "pitch_roll_yaw": "Pitch:8.5 Roll:-1.2 Yaw:2.3",
+                        "AU": "AU01:0.2 AU02:0.1 AU04:0.0 AU05:0.15 AU06:0.95 AU07:0.0 AU09:0.0 AU10:0.05 AU11:0.0 AU12:0.98 AU14:0.1 AU15:0.0 AU17:0.0 AU20:0.1 AU23:0.0 AU24:0.0 AU25:0.2 AU26:0.0 AU28:0.0 AU43:0.0"
+                    },
+                    {
+                        "valence": 0.1,
+                        "arousal": 0.2,
+                        "speaker": "counselor",
+                        "emotion": "平静:0.9",
+                        "start": 23000,
+                        "end": 26200,
+                        "total_score": null,
+                        "avg_score": null,
+                        "file_id": "2301092100",
+                        "text": "そうですね、新しいことを始めるときの気持ちはどのような感じですか？期待と不安が混じっていることもありますね。",
+                        "stress_score_avg": null,
+                        "audio_emotion": "angry:0.0 happy:0.3 sad:0.1 neutral:0.6",
+                        "face_emotion": "anger:0.01 disgust:0.01 fear:0.05 happiness:0.25 sadness:0.05 surprise:0.03 neutral:0.6",
+                        "pitch_roll_yaw": "Pitch:1.8 Roll:0.2 Yaw:-1.1",
+                        "AU": "AU01:0.1 AU02:0.05 AU04:0.02 AU05:0.0 AU06:0.2 AU07:0.0 AU09:0.0 AU10:0.0 AU11:0.0 AU12:0.3 AU14:0.0 AU15:0.0 AU17:0.0 AU20:0.0 AU23:0.0 AU24:0.0 AU25:0.05 AU26:0.0 AU28:0.0 AU43:0.0"
+                    },
+                    {
+                        "valence": -0.3,
+                        "arousal": 0.4,
+                        "speaker": "participant",
+                        "emotion": "悲しみ:0.6 恐れ:0.4",
+                        "start": 26500,
+                        "end": 29800,
+                        "total_score": 72.3,
+                        "avg_score": 2.1,
+                        "file_id": "2301092100",
+                        "text": "実は少し不安もあります。うまくいくかどうか心配で夜も眠れません。失敗したらどうしようと思ってしまいます。でも頑張りたいと思います。",
+                        "stress_score_avg": 3.2,
+                        "audio_emotion": "angry:0.1 happy:0.1 sad:0.7 neutral:0.1",
+                        "face_emotion": "anger:0.05 disgust:0.02 fear:0.4 happiness:0.1 sadness:0.4 surprise:0.02 neutral:0.01",
+                        "pitch_roll_yaw": "Pitch:-2.1 Roll:1.5 Yaw:0.8",
+                        "AU": "AU01:0.3 AU02:0.2 AU04:0.6 AU05:0.0 AU06:0.1 AU07:0.0 AU09:0.0 AU10:0.0 AU11:0.0 AU12:0.05 AU14:0.0 AU15:0.4 AU17:0.0 AU20:0.0 AU23:0.2 AU24:0.0 AU25:0.0 AU26:0.0 AU28:0.0 AU43:0.0"
+                    },
+                    {
+                        "valence": 0.3,
+                        "arousal": 0.1,
+                        "speaker": "counselor",
+                        "emotion": "平静:0.8",
+                        "start": 30000,
+                        "end": 33500,
+                        "total_score": null,
+                        "avg_score": null,
+                        "file_id": "2301092100",
+                        "text": "不安を感じるのは自然なことですね。一歩ずつ進んでいけば大丈夫ですよ。完璧を求めすぎずに、まずは小さな目標から始めてみましょう。",
+                        "stress_score_avg": null,
+                        "audio_emotion": "angry:0.0 happy:0.4 sad:0.0 neutral:0.6",
+                        "face_emotion": "anger:0.01 disgust:0.01 fear:0.02 happiness:0.35 sadness:0.02 surprise:0.01 neutral:0.58",
+                        "pitch_roll_yaw": "Pitch:3.2 Roll:-0.8 Yaw:-0.5",
+                        "AU": "AU01:0.05 AU02:0.03 AU04:0.0 AU05:0.0 AU06:0.25 AU07:0.0 AU09:0.0 AU10:0.0 AU11:0.0 AU12:0.4 AU14:0.0 AU15:0.0 AU17:0.0 AU20:0.0 AU23:0.0 AU24:0.0 AU25:0.05 AU26:0.0 AU28:0.0 AU43:0.0"
+                    },
+                    {
+                        "valence": 0.4,
+                        "arousal": 0.5,
+                        "speaker": "participant",
+                        "emotion": "希望:0.7 安心:0.3",
+                        "start": 34000,
+                        "end": 37200,
+                        "total_score": 85.2,
+                        "avg_score": 1.9,
+                        "file_id": "2301092100",
+                        "text": "そうですね、小さな目標から始めるのは良いアイデアですね。少しずつ前進していけば達成感も味わえそうです。ありがとうございます。",
+                        "stress_score_avg": 2.1,
+                        "audio_emotion": "angry:0.0 happy:0.7 sad:0.1 neutral:0.2",
+                        "face_emotion": "anger:0.01 disgust:0.01 fear:0.05 happiness:0.7 sadness:0.05 surprise:0.03 neutral:0.15",
+                        "pitch_roll_yaw": "Pitch:4.1 Roll:-0.5 Yaw:1.2",
+                        "AU": "AU01:0.1 AU02:0.05 AU04:0.0 AU05:0.05 AU06:0.6 AU07:0.0 AU09:0.0 AU10:0.0 AU11:0.0 AU12:0.75 AU14:0.0 AU15:0.0 AU17:0.0 AU20:0.0 AU23:0.0 AU24:0.0 AU25:0.1 AU26:0.0 AU28:0.0 AU43:0.0"
+                    },
+                    {
+                        "valence": -0.1,
+                        "arousal": 0.3,
+                        "speaker": "participant",
+                        "emotion": "疲れ:0.8 憂鬱:0.2",
+                        "start": 38000,
+                        "end": 41500,
+                        "total_score": 70.5,
+                        "avg_score": 2.3,
+                        "file_id": "2301092100",
+                        "text": "最近は仕事で疲れることが多くて、家に帰ってもなかなかリラックスできません。休日も何となく気分が重いです。",
+                        "stress_score_avg": 3.5,
+                        "audio_emotion": "angry:0.05 happy:0.1 sad:0.8 neutral:0.05",
+                        "face_emotion": "anger:0.02 disgust:0.03 fear:0.1 happiness:0.05 sadness:0.75 surprise:0.02 neutral:0.03",
+                        "pitch_roll_yaw": "Pitch:-1.5 Roll:0.8 Yaw:-0.3",
+                        "AU": "AU01:0.2 AU02:0.1 AU04:0.3 AU05:0.0 AU06:0.05 AU07:0.0 AU09:0.0 AU10:0.0 AU11:0.0 AU12:0.02 AU14:0.0 AU15:0.6 AU17:0.0 AU20:0.0 AU23:0.1 AU24:0.0 AU25:0.0 AU26:0.0 AU28:0.0 AU43:0.0"
+                    }
+                ]
+            };
+            console.log('サンプルデータ:', sampleData);
+            loadData(sampleData);
+        }
+
+        // 形態素解析の初期化
+        function initializeMorphology() {
+            console.log('=== 形態素解析初期化開始 ===');
+            
+            if (typeof kuromoji === 'undefined') {
+                console.error('kuromoji.jsが読み込まれていません');
+                updateMorphologyStatus('error', '❌ 形態素解析: ライブラリ読み込み失敗');
+                return;
+            }
+            
+            updateMorphologyStatus('loading', '🔄 形態素解析: 辞書読み込み中...');
+            
+            try {
+                const dicPath = 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/';
+                
+                kuromoji.builder({ dicPath: dicPath }).build(function (err, tokenizer) {
+                    if (err) {
+                        console.error('形態素解析の初期化に失敗:', err);
+                        updateMorphologyStatus('error', '❌ 形態素解析: 辞書読み込み失敗');
+                        enableSimpleMorphology();
+                        return;
+                    }
+                    
+                    morphologyTokenizer = tokenizer;
+                    updateMorphologyStatus('ready', '✅ 形態素解析: 利用可能');
+                    console.log('形態素解析の初期化完了');
+                });
+            } catch (error) {
+                console.error('形態素解析初期化エラー:', error);
+                updateMorphologyStatus('error', '❌ 形態素解析: 初期化失敗');
+                enableSimpleMorphology();
+            }
+        }
+
+        function enableSimpleMorphology() {
+            console.log('フォールバック: 軽量分かち書きを使用');
+            updateMorphologyStatus('ready', '⚠️ 簡易分かち書き: 利用可能');
+            morphologyTokenizer = 'simple';
+        }
+
+        function simpleTokenize(text) {
+            if (!text) return [];
+            
+            let tokens = [];
+            const patterns = [
+                /[一-龯]+[ぁ-ん]+/g,
+                /[一-龯]+/g,
+                /[ァ-ヶー]+/g,
+                /[ぁ-ん]{2,}/g
+            ];
+            
+            let processedText = text;
+            
+            patterns.forEach(pattern => {
+                const matches = processedText.match(pattern);
+                if (matches) {
+                    matches.forEach(match => {
+                        if (match.length >= 2 && !japaneseStopwords.has(match)) {
+                            tokens.push({
+                                surface_form: match,
+                                basic_form: match,
+                                pos: '名詞'
+                            });
+                        }
+                        processedText = processedText.replace(match, '');
+                    });
+                }
+            });
+            
+            return tokens;
+        }
+
+        function updateMorphologyStatus(status, message) {
+            const statusElement = document.getElementById('morphologyStatus');
+            statusElement.textContent = message;
+            statusElement.className = `morphology-status ${status}`;
+        }
+
+        function toggleMorphology() {
+            console.log('形態素解析切り替え開始');
+            console.log('useMorphology現在値:', useMorphology);
+            console.log('morphologyTokenizer状態:', morphologyTokenizer);
+            
+            if (!morphologyTokenizer) {
+                alert('形態素解析が初期化されていません。しばらくお待ちください。');
+                return;
+            }
+            
+            useMorphology = !useMorphology;
+            const toggleBtn = document.getElementById('morphologyToggle');
+            
+            if (useMorphology) {
+                toggleBtn.textContent = '形態素解析: ON';
+                toggleBtn.classList.add('active');
+            } else {
+                toggleBtn.textContent = '形態素解析: OFF';
+                toggleBtn.classList.remove('active');
+            }
+            
+            console.log('形態素解析切り替え後:', useMorphology);
+            
+            if (currentData && segments && segments.length > 0) {
+                console.log('頻出語分析を再実行します');
+                analyzeWordFrequency();
+            }
+        }
+
+        function extractWordsWithMorphology(text) {
+            if (!text) return [];
+            
+            try {
+                let tokens;
+                
+                if (morphologyTokenizer === 'simple') {
+                    tokens = simpleTokenize(text);
+                } else if (morphologyTokenizer && typeof morphologyTokenizer.tokenize === 'function') {
+                    tokens = morphologyTokenizer.tokenize(text);
+                } else {
+                    console.warn('形態素解析器が利用できません。正規表現ベースにフォールバック');
+                    return extractWords(text);
+                }
+                
+                const words = tokens
+                    .filter(token => {
+                        const pos = token.pos || '名詞';
+                        const surface = token.surface_form || '';
+                        const basic = token.basic_form || token.surface_form || '';
+                        
+                        return (pos === '名詞' || pos === '動詞' || pos === '形容詞' || pos === '副詞') &&
+                               surface.length >= 2 &&
+                               !japaneseStopwords.has(surface) &&
+                               !japaneseStopwords.has(basic) &&
+                               !/^[ぁ-んー]+$/.test(surface);
+                    })
+                    .map(token => {
+                        const basic = token.basic_form;
+                        const surface = token.surface_form;
+                        return basic && basic !== '*' && basic !== surface ? basic : surface;
+                    })
+                    .filter(word => word && word.length >= 2);
+                
+                return [...new Set(words)];
+            } catch (error) {
+                console.error('形態素解析エラー:', error);
+                return extractWords(text);
+            }
+        }
+
+        function extractWords(text) {
+            if (!text) {
+                console.log('extractWords: テキストが空です');
+                return [];
+            }
+            
+            console.log('extractWords 処理中:', text.substring(0, 50));
+            
+            let cleanText = text
+                .replace(/[。、！？.,!?()（）「」『』【】]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            
+            let words = [];
+            const matches = cleanText.match(/[ぁ-んァ-ヶー一-龯]+/g);
+            if (matches) {
+                words = matches.filter(word => 
+                    word.length >= 2 && 
+                    !japaneseStopwords.has(word) &&
+                    !/^[ぁ-んー]+$/.test(word)
+                );
+            }
+            
+            console.log('extractWords 結果:', words);
+            return words;
+        }
+
+        function analyzeWordFrequency() {
+            console.log('=== 頻出語分析開始（参加者のみ）===');
+            console.log('形態素解析使用:', useMorphology);
+            
+            // まず変数が正しく初期化されているか確認
+            if (typeof useMorphology === 'undefined') {
+                console.warn('useMorphology が未定義です。初期化中...');
+                useMorphology = false;
+            }
+            
+            wordFrequencyData = {};
+            
+            // 参加者のセグメントのみを処理
+            const participantSegments = segments.filter(s => s.speaker === 'participant');
+            
+            participantSegments.forEach((segment, index) => {
+                if (!segment.text || segment.valence === null || segment.arousal === null) {
+                    console.log(`参加者セグメント ${index} をスキップ: テキストまたは感情データなし`);
+                    return;
+                }
+                
+                console.log(`参加者セグメント ${index} 処理中: "${segment.text.substring(0, 30)}..."`);
+                
+                const words = useMorphology && morphologyTokenizer ? 
+                              extractWordsWithMorphology(segment.text) : 
+                              extractWords(segment.text);
+                
+                console.log(`抽出された単語 (${words.length}個):`, words);
+                
+                words.forEach(word => {
+                    if (!wordFrequencyData[word]) {
+                        wordFrequencyData[word] = {
+                            count: 0,
+                            valenceSum: 0,
+                            arousalSum: 0,
+                            segments: []
+                        };
+                    }
+                    
+                    wordFrequencyData[word].count++;
+                    wordFrequencyData[word].valenceSum += segment.valence;
+                    wordFrequencyData[word].arousalSum += segment.arousal;
+                    wordFrequencyData[word].segments.push(segment);
+                });
+            });
+            
+            // 平均値を計算
+            Object.keys(wordFrequencyData).forEach(word => {
+                const data = wordFrequencyData[word];
+                data.avgValence = data.valenceSum / data.count;
+                data.avgArousal = data.arousalSum / data.count;
+            });
+            
+            console.log('頻出語分析完了:', wordFrequencyData);
+            console.log('抽出単語数:', Object.keys(wordFrequencyData).length);
+            
+            updateWordAnalysis();
+        }
+
+        function updateWordAnalysis() {
+            console.log('=== 頻出語分析表示更新（参加者のみ）===');
+            
+            const wordCount = parseInt(document.getElementById('wordCountInput').value);
+            
+            console.log('単語データ:', wordFrequencyData);
+            console.log('単語数:', Object.keys(wordFrequencyData).length);
+            
+            if (!wordFrequencyData || Object.keys(wordFrequencyData).length === 0) {
+                console.warn('表示データがありません');
+                const plotContainer = document.getElementById('russellWordPlot');
+                plotContainer.innerHTML = `
+                    <div class="russell-axis horizontal"></div>
+                    <div class="russell-axis vertical"></div>
+                    <div class="russell-labels" style="top: 10px; left: 50%; transform: translateX(-50%);">高覚醒</div>
+                    <div class="russell-labels" style="bottom: 10px; left: 50%; transform: translateX(-50%);">低覚醒</div>
+                    <div class="russell-labels" style="left: 10px; top: 50%; transform: translateY(-50%);">不快</div>
+                    <div class="russell-labels" style="right: 10px; top: 50%; transform: translateY(-50%);">快</div>
+                    <div class="no-data" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                        参加者の分析データがありません<br>
+                        <small>形態素解析を有効にするか、データを確認してください</small>
+                    </div>
+                `;
+                
+                // 象限も空にする
+                ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+                    document.getElementById(q + 'Words').innerHTML = '<span style="color: #999; font-style: italic;">該当する単語なし</span>';
+                });
+                return;
+            }
+            
+            const sortedWords = Object.entries(wordFrequencyData)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, wordCount);
+            
+            console.log('ソート済み単語 (上位' + wordCount + '個):', sortedWords);
+            
+            updateWordPlot(sortedWords);
+            updateQuadrantWords(sortedWords);
+        }
+
+        function updateWordPlot(sortedWords) {
+            const plotContainer = document.getElementById('russellWordPlot');
+            
+            const existingWords = plotContainer.querySelectorAll('.word-point');
+            existingWords.forEach(word => word.remove());
+            
+            if (sortedWords.length === 0) {
+                return;
+            }
+            
+            const maxCount = Math.max(...sortedWords.map(([, data]) => data.count));
+            const minCount = Math.min(...sortedWords.map(([, data]) => data.count));
+            
+            sortedWords.forEach(([word, data]) => {
+                const wordElement = document.createElement('div');
+                wordElement.className = 'word-point participant';
+                wordElement.textContent = word;
+                
+                const x = Math.max(5, Math.min(95, ((data.avgValence + 1) / 2) * 90 + 5));
+                const y = Math.max(5, Math.min(95, (1 - (data.avgArousal + 1) / 2) * 90 + 5));
+                
+                wordElement.style.left = x + '%';
+                wordElement.style.top = y + '%';
+                
+                const fontSizeScale = maxCount > minCount ? 
+                    0.8 + 0.7 * ((data.count - minCount) / (maxCount - minCount)) : 1;
+                wordElement.style.fontSize = (10 * fontSizeScale) + 'px';
+                
+                wordElement.title = `${word} (${data.count}回)\n覚醒度: ${data.avgArousal.toFixed(2)}\n感情価: ${data.avgValence.toFixed(2)}`;
+                
+                wordElement.addEventListener('click', () => {
+                    showWordDetails(word, data);
+                });
+                
+                plotContainer.appendChild(wordElement);
+            });
+        }
+
+        function updateQuadrantWords(sortedWords) {
+            const quadrants = {
+                q1: [],
+                q2: [],
+                q3: [],
+                q4: []
+            };
+            
+            sortedWords.forEach(([word, data]) => {
+                const valence = data.avgValence;
+                const arousal = data.avgArousal;
+                
+                if (valence > 0 && arousal > 0) {
+                    quadrants.q1.push([word, data]);
+                } else if (valence < 0 && arousal > 0) {
+                    quadrants.q2.push([word, data]);
+                } else if (valence < 0 && arousal < 0) {
+                    quadrants.q3.push([word, data]);
+                } else if (valence > 0 && arousal < 0) {
+                    quadrants.q4.push([word, data]);
+                }
+            });
+            
+            Object.keys(quadrants).forEach(quadrant => {
+                const container = document.getElementById(quadrant + 'Words');
+                if (quadrants[quadrant].length === 0) {
+                    container.innerHTML = '<span style="color: #999; font-style: italic;">該当する単語なし</span>';
+                } else {
+                    container.innerHTML = quadrants[quadrant]
+                        .slice(0, 10)
+                        .map(([word, data]) => `<span class="word-chip">${word} (${data.count})</span>`)
+                        .join('');
+                }
+            });
+        }
+
+        function showWordDetails(word, data) {
+            let analysisMethod;
+            if (useMorphology) {
+                analysisMethod = morphologyTokenizer === 'simple' ? '簡易分かち書き' : '形態素解析(kuromoji)';
+            } else {
+                analysisMethod = '正規表現';
+            }
+            
+            const segmentTexts = data.segments.slice(0, 5).map(s => `"${s.text}"`).join('\n');
+            const moreSegments = data.segments.length > 5 ? `\n... 他${data.segments.length - 5}件` : '';
+            
+            alert(`単語: ${word}\n話者: 参加者\n分析方法: ${analysisMethod}\n出現回数: ${data.count}\n平均覚醒度: ${data.avgArousal.toFixed(3)}\n平均感情価: ${data.avgValence.toFixed(3)}\n\n出現文脈（最新5件）:\n${segmentTexts}${moreSegments}`);
+        }
+
+        // JSONLファイル読み込み
+        function readJSONLFile(file) {
+            console.log('=== ファイル読み込み開始 ===');
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    const lines = content.trim().split('\n');
+                    const validLines = lines.filter(line => line.trim());
+                    
+                    if (validLines.length === 0) {
+                        alert('ファイルにデータが含まれていません');
+                        return;
+                    }
+                    
+                    const segments = [];
+                    validLines.forEach((line, index) => {
+                        try {
+                            const parsed = JSON.parse(line);
+                            segments.push(parsed);
+                        } catch (parseError) {
+                            console.error(`行 ${index + 1} の解析エラー:`, parseError);
+                            throw new Error(`行 ${index + 1} の解析に失敗: ${parseError.message}`);
+                        }
+                    });
+                    
+                    const jsonData = { segments: segments };
+                    loadData(jsonData);
+                    
+                } catch (error) {
+                    console.error('ファイル処理エラー:', error);
+                    alert('JSONLファイルの処理に失敗しました: ' + error.message);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // データ読み込み処理
+        function loadData(data) {
+            console.log('=== データ読み込み処理開始 ===');
+            currentData = data;
+            segments = data.segments || [];
+            filteredSegments = [...segments];
+            segmentMapping = segments.map((_, index) => index);
+            currentSegmentIndex = 0;
+            
+            if (segments.length === 0) {
+                alert('セグメントデータが見つかりません');
+                return;
+            }
+            
+            console.log('読み込まれたセグメント数:', segments.length);
+            console.log('サンプルセグメント:', segments[0]);
+            
+            updateFileInfo();
+            updateStatistics();
+            updateRussellCircle();
+            updateTrendsChart();
+            updateConversationView();
+            loadMediaFiles();
+            enableControls();
+            
+            // 表情分析データ処理
+            processFaceAnalysisData();
+            
+            // 頻出語分析を遅延実行
+            console.log('頻出語分析を開始します...');
+            setTimeout(() => {
+                console.log('useMorphology状態:', typeof useMorphology, useMorphology);
+                console.log('morphologyTokenizer状態:', typeof morphologyTokenizer, morphologyTokenizer);
+                analyzeWordFrequency();
+            }, 500);
+            
+            console.log('=== データ読み込み処理完了 ===');
+        }
+
+        // ファイル情報更新
+        function updateFileInfo() {
+            const firstSegment = segments[0];
+            const fileId = firstSegment?.file_id || 'Unknown';
+            
+            document.getElementById('fileId').textContent = fileId;
+            document.getElementById('segmentCount').textContent = segments.length;
+            updateCurrentSegmentInfo();
+            
+            if (fileId !== 'Unknown') {
+                mediaFiles.video = `video/${fileId}.mp4`;
+                mediaFiles.audio = getSegmentAudioFile(segments[currentSegmentIndex]);
+            }
+        }
+
+        // 現在のセグメント情報更新
+        function updateCurrentSegmentInfo() {
+            if (segments.length > 0 && currentSegmentIndex < segments.length) {
+                const segment = segments[currentSegmentIndex];
+                const info = `${currentSegmentIndex + 1}/${segments.length} - ${segment.speaker}`;
+                document.getElementById('currentSegmentInfo').textContent = info;
+            }
+        }
+
+        // 表情の平均値を求めて返す
+        function calculateAverageFaceEmotion(faceEmotionSegments, emotionType) {
+            let avgEmotionValue = 0;
+            if (faceEmotionSegments.length > 0) {
+                let emotionSum = 0;
+                let validCount = 0;
+
+                faceEmotionSegments.forEach(s => {
+                    try {
+                        const emotions = s.face_emotion.split(' ');
+                        emotions.forEach(emotionStr => {
+                            const [emotion, value] = emotionStr.split(':');
+                            if (emotion === emotionType && value !== undefined) {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    emotionSum += numValue;
+                                    validCount++;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('表情データ解析エラー:', error);
+                    }
+                });
+
+                avgEmotionValue = validCount > 0 ? emotionSum / validCount : 0;
+                return avgEmotionValue;
+           }  
+           return 0.0;
+
+        }
+
+        // 音声感情の平均値を求めて返す
+        function calculateAverageAudioEmotion(audioEmotionSegments, emotionType) {
+            let avgEmotionValue = 0;
+            if (audioEmotionSegments.length > 0) {
+                let emotionSum = 0;
+                let validCount = 0;
+
+                audioEmotionSegments.forEach(s => {
+                    try {
+                        const emotions = s.audio_emotion.split(' ');
+                        emotions.forEach(emotionStr => {
+                            const [emotion, value] = emotionStr.split(':');
+                            if (emotion === emotionType && value !== undefined) {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    emotionSum += numValue;
+                                    validCount++;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('音声感情データ解析エラー:', error);
+                    }
+                });
+
+                avgEmotionValue = validCount > 0 ? emotionSum / validCount : 0;
+                return avgEmotionValue;
+           }  
+           return 0.0;
+
+        }
+
+        // テキスト感情の平均値を求めて返す
+        function calculateAverageTextEmotion(textEmotionSegments, emotionType) {
+            let avgEmotionValue = 0;
+            if (textEmotionSegments.length > 0) {
+                let emotionSum = 0;
+                let validCount = 0;
+
+                textEmotionSegments.forEach(s => {
+                    try {
+                        const emotions = s.text_emotion.split(' ');
+                        emotions.forEach(emotionStr => {
+                            const [emotion, value] = emotionStr.split(':');
+                            if (emotion === emotionType && value !== undefined) {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue)) {
+                                    emotionSum += numValue;
+                                    validCount++;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('テキスト感情データ解析エラー:', error);
+                    }
+                });
+
+                avgEmotionValue = validCount > 0 ? emotionSum / validCount : 0;
+                return avgEmotionValue;
+           }  
+           return 0.0;
+        }
+
+
+        // 統計情報更新
+        function updateStatistics() {
+            console.log('=== 統計情報更新開始 ===');
+            const participantSegments = segments.filter(s => s.speaker === 'participant' && s.valence !== null);
+            console.log('参加者セグメント数:', participantSegments.length);
+            
+            if (participantSegments.length === 0) {
+                document.getElementById('avgArousal').textContent = '-';
+                document.getElementById('avgValence').textContent = '-';
+                document.getElementById('avgStress').textContent = '-';
+                
+                document.getElementById('avgAudioSad').textContent = '-';
+                document.getElementById('avgAudioHap').textContent = '-';
+                document.getElementById('avgAudioAng').textContent = '-';
+
+                document.getElementById('avgTextSad').textContent = '-';
+                document.getElementById('avgTextAnger').textContent = '-';
+                document.getElementById('avgTextJoy').textContent = '-';
+
+                document.getElementById('avgFaceSad').textContent = '-';
+                document.getElementById('avgFaceHap').textContent = '-';
+                document.getElementById('avgFaceAng').textContent = '-';
+                return;
+            }
+            
+            const avgArousal = participantSegments.reduce((sum, s) => sum + (s.arousal || 0), 0) / participantSegments.length;
+            const avgValence = participantSegments.reduce((sum, s) => sum + (s.valence || 0), 0) / participantSegments.length;
+            
+            const stressSegments = participantSegments.filter(s => s.stress_score_avg !== null);
+            const avgStress = stressSegments.length > 0 ? 
+                stressSegments.reduce((sum, s) => sum + s.stress_score_avg, 0) / stressSegments.length : 0;
+            
+            // テキスト感情の悲しみ平均を計算
+            const textSegments = participantSegments.filter(s => s.text_emotion);
+            let avgTextSad = calculateAverageTextEmotion(textSegments, 'sadness');
+            let avgTextAnger = calculateAverageTextEmotion(textSegments, 'anger');
+            let avgTextJoy = calculateAverageTextEmotion(textSegments, 'joy');
+
+            // 音声感情の悲しみ平均を計算
+            const audioSegments = participantSegments.filter(s => s.audio_emotion);
+            let avgAudioSadness = calculateAverageAudioEmotion(audioSegments, 'sad');            
+            let avgAudioHappiness = calculateAverageAudioEmotion(audioSegments, 'happy');
+            let avgAudioAnger = calculateAverageAudioEmotion(audioSegments, 'angry');
+
+
+           
+            // 表情の悲しみ平均を計算
+            const faceSegments = participantSegments.filter(s => s.face_emotion);
+            let avgFaceSadness = calculateAverageFaceEmotion(faceSegments, 'sadness');
+            let avgFaceHapiness = calculateAverageFaceEmotion(faceSegments, '')
+            let avgFaceAnger = calculateAverageFaceEmotion(faceSegments, 'anger');
+            
+            document.getElementById('avgArousal').textContent = avgArousal.toFixed(2);
+            document.getElementById('avgValence').textContent = avgValence.toFixed(2);
+            document.getElementById('avgStress').textContent = avgStress.toFixed(1);
+
+            document.getElementById('avgAudioSad').textContent = avgAudioSadness.toFixed(4);
+            document.getElementById('avgAudioHap').textContent = avgAudioHappiness.toFixed(4);
+            document.getElementById('avgAudioAng').textContent = avgAudioAnger.toFixed(4);
+
+            document.getElementById('avgFaceSad').textContent = avgFaceSadness.toFixed(4);
+            document.getElementById('avgFaceHap').textContent = avgFaceHapiness.toFixed(4);
+            document.getElementById('avgFaceAnger').textContent = avgFaceAnger.toFixed(4);
+
+            document.getElementById('avgTextSad').textContent = avgTextSad.toFixed(4);
+            document.getElementById('avgTextJoy').textContent = avgTextJoy.toFixed(4);
+            document.getElementById('avgTextAnger').textContent = avgTextAnger.toFixed(4);
+            
+
+            console.log('統計情報:', { avgArousal, avgValence, avgStress, avgTextJoy, avgTextAnger, avgTextSad, avgAudioHappiness, avgAudioAnger, avgFaceSadness, avgFaceHapiness, avgFaceAnger });
+        }
+
+        // 感情の色を取得
+        function getEmotionColor(emotion) {
+            if (!emotion) return '#74b9ff';
+            
+            const emotionMap = {
+                '平静': '#6c5ce7',
+                '幸福': '#00b894',
+                '明るい': '#fdcb6e',
+                '興奮': '#fd79a8',
+                '驚き': '#e17055',
+                '警戒': '#74b9ff',
+                '恐れ': '#a29bfe',
+                '悩み': '#8884d8',
+                '不愉快': '#d63031',
+                '抑圧': '#636e72',
+                '憂鬱': '#2d3436',
+                '退屈': '#b2bec3',
+                '疲れ': '#fab1a0',
+                '眠気': '#81ecec',
+                'リラックス': '#55a3ff',
+                '気楽': '#00cec9',
+                '満足': '#6c5ce7'
+            };
+            
+            const emotionName = emotion.split(':')[0];
+            return emotionMap[emotionName] || '#74b9ff';
+        }
+
+        // トレンドチャート更新
+        function updateTrendsChart() {
+            console.log('=== トレンドチャート更新開始 ===');
+            const ctx = document.getElementById('trendsChart').getContext('2d');
+            
+            if (trendsChart) {
+                trendsChart.destroy();
+            }
+            
+            const participantData = segments.filter(s => s.speaker === 'participant');
+            const timeLabels = participantData.map((s, i) => `${i + 1}`);
+            
+            trendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        {
+                            label: '覚醒度',
+                            data: participantData.map(s => s.arousal),
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            tension: 0.4,
+                            pointBackgroundColor: '#ff6b6b',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: '感情価',
+                            data: participantData.map(s => s.valence),
+                            borderColor: '#4ecdc4',
+                            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                            tension: 0.4,
+                            pointBackgroundColor: '#4ecdc4',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: 'ストレス',
+                            data: participantData.map(s => s.stress_score_avg ? s.stress_score_avg / 5 : null),
+                            borderColor: '#feca57',
+                            backgroundColor: 'rgba(254, 202, 87, 0.1)',
+                            tension: 0.4,
+                            pointBackgroundColor: '#feca57',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const participantSegmentIndex = getParticipantSegmentIndex(index);
+                            if (participantSegmentIndex !== -1) {
+                                jumpToSegment(participantSegmentIndex);
+                            }
+                        }
+                    }
+                }
+            });
+            
+            console.log('トレンドチャート作成完了');
+        }
+
+        // 参加者セグメントのインデックスを取得
+        function getParticipantSegmentIndex(participantIndex) {
+            let count = 0;
+            for (let i = 0; i < segments.length; i++) {
+                if (segments[i].speaker === 'participant') {
+                    if (count === participantIndex) {
+                        return i;
+                    }
+                    count++;
+                }
+            }
+            return -1;
+        }
+
+        // Russell円環モデル更新
+        function updateRussellCircle() {
+            console.log('=== Russell円環モデル更新開始 ===');
+            const circle = document.getElementById('russellCircle');
+            
+            const existingPoints = circle.querySelectorAll('.russell-point');
+            existingPoints.forEach(point => point.remove());
+            
+            segments.forEach((segment, index) => {
+                if (segment.valence !== null && segment.arousal !== null) {
+                    const point = document.createElement('div');
+                    point.className = `russell-point ${segment.speaker}`;
+                    point.dataset.segmentIndex = index;
+                    
+                    const x = ((segment.valence + 1) / 2) * 100;
+                    const y = (1 - (segment.arousal + 1) / 2) * 100;
+                    
+                    point.style.left = x + '%';
+                    point.style.top = y + '%';
+                    point.title = `${segment.speaker}: ${segment.text?.substring(0, 50)}...`;
+                    
+                    point.addEventListener('click', () => {
+                        jumpToSegment(index);
+                    });
+                    
+                    circle.appendChild(point);
+                }
+            });
+            
+            console.log('Russell円環ポイント数:', circle.querySelectorAll('.russell-point').length);
+        }
+
+        // セグメントにジャンプ
+        function jumpToSegment(segmentIndex) {
+            console.log('=== セグメントジャンプ ===', segmentIndex);
+            
+            // 全てのセグメントをリセット表示
+            resetFilters();
+            
+            // セグメントを選択して再生
+            selectAndPlaySegment(segmentIndex);
+            
+            // 会話ビューで該当セグメントにスクロール
+            setTimeout(() => {
+                const messages = document.querySelectorAll('.message');
+                if (messages[segmentIndex]) {
+                    messages[segmentIndex].scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }
+            }, 100);
+        }
+
+        // フィルターをリセット
+        function resetFilters() {
+            document.getElementById('speakerFilter').value = '';
+            document.getElementById('emotionFilter').value = '';
+            document.getElementById('keywordSearch').value = '';
+            applyFilters();
+        }
+
+        // 会話ビュー更新
+        function updateConversationView() {
+            console.log('=== 会話ビュー更新開始 ===');
+            const conversationView = document.getElementById('conversationView');
+            
+            if (filteredSegments.length === 0) {
+                conversationView.innerHTML = '<div class="no-data">表示するセグメントがありません</div>';
+                return;
+            }
+            
+            const conversationHtml = filteredSegments.map((segment, filteredIndex) => {
+                const actualIndex = segmentMapping[filteredIndex];
+                const emotion = segment.emotion ? segment.emotion.split(' ')[0].split(':')[0] : '';
+                const time = formatTimeFromMs(segment.start);
+                
+                return `
+                    <div class="message ${segment.speaker}" onclick="selectAndPlaySegment(${actualIndex})" style="cursor: pointer;">
+                        <div class="message-avatar">
+                            ${segment.speaker === 'participant' ? 'P' : 'C'}
+                        </div>
+                        <div class="message-content">
+                            <div class="message-text">${highlightKeyword(segment.text || '')}</div>
+                            <div class="message-meta">
+                                <span class="message-time">${time}</span>
+                                <div class="message-scores">
+                                    ${emotion ? `<span class="score-chip" style="background-color: ${getEmotionColor(emotion)}; color: white;">${emotion}</span>` : ''}
+                                    ${segment.valence !== null ? `<span class="score-chip">V:${segment.valence.toFixed(2)}</span>` : ''}
+                                    ${segment.arousal !== null ? `<span class="score-chip">A:${segment.arousal.toFixed(2)}</span>` : ''}
+                                    ${segment.stress_score_avg !== null ? `<span class="score-chip">S:${segment.stress_score_avg.toFixed(1)}</span>` : ''}
+                                </div>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 11px; opacity: 0.8;">
+                                <span style="background: rgba(255,255,255,0.3); padding: 2px 6px; border-radius: 10px;">
+                                    🎵 クリックして再生
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            conversationView.innerHTML = conversationHtml;
+            console.log('会話ビュー更新完了:', filteredSegments.length, '件');
+        }
+
+        // セグメント選択と再生
+        function selectAndPlaySegment(index) {
+            console.log('=== セグメント選択と再生 ===', index);
+            if (index < 0 || index >= segments.length) return;
+            
+            // 現在の再生を停止
+            stopPlayback();
+            
+            const segment = segments[index];
+            currentSegmentIndex = index;
+            updateCurrentSegmentInfo();
+            selectSegment(index);
+            
+            // メディア再生
+            playSegment(segment);
+        }
+
+        // セグメント再生
+        function playSegment(segment) {
+            console.log('セグメント再生:', segment);
+            
+            if (currentMediaMode === 'video') {
+                playVideoSegment(segment);
+            } else {
+                playAudioSegment(segment);
+            }
+        }
+
+        // 動画セグメント再生
+        function playVideoSegment(segment) {
+            console.log('動画セグメント再生:', segment);
+            if (!currentVideoElement) {
+                alert('動画ファイルが読み込まれていません');
+                return;
+            }
+            
+            const startTime = segment.start / 1000;
+            const endTime = segment.end / 1000;
+            
+            currentVideoElement.currentTime = startTime;
+            
+            currentVideoElement.play().then(() => {
+                isPlaying = true;
+                document.getElementById('playPauseBtn').textContent = '⏸️ 停止';
+                
+                const duration = endTime - startTime;
+                if (segmentPlaybackTimeout) {
+                    clearTimeout(segmentPlaybackTimeout);
+                }
+                segmentPlaybackTimeout = setTimeout(() => {
+                    currentVideoElement.pause();
+                    isPlaying = false;
+                    document.getElementById('playPauseBtn').textContent = '▶️ 再生';
+                }, duration * 1000);
+            }).catch(err => {
+                console.error('動画再生エラー:', err);
+                alert('動画ファイルの再生に失敗しました');
+            });
+        }
+
+        // 音声セグメント再生
+        function playAudioSegment(segment) {
+            console.log('音声セグメント再生:', segment);
+            
+            // セグメント専用の音声ファイルを作成
+            const audioFile = getSegmentAudioFile(segment);
+            const audioElement = document.createElement('audio');
+            audioElement.src = audioFile;
+            audioElement.controls = true;
+            audioElement.preload = 'metadata';
+            
+            // 現在の音声要素を更新
+            if (currentAudioElement && currentAudioElement.parentNode) {
+                currentAudioElement.parentNode.replaceChild(audioElement, currentAudioElement);
+            }
+            currentAudioElement = audioElement;
+            
+            // イベントリスナー設定
+            audioElement.addEventListener('loadedmetadata', function() {
+                audioElement.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('playPauseBtn').textContent = '⏸️ 停止';
+                }).catch(err => {
+                    console.error('音声再生エラー:', err);
+                    alert(`音声ファイル「${audioFile}」の再生に失敗しました`);
+                });
+            });
+            
+            audioElement.addEventListener('ended', function() {
+                isPlaying = false;
+                document.getElementById('playPauseBtn').textContent = '▶️ 再生';
+            });
+            
+            audioElement.addEventListener('error', function() {
+                alert(`音声ファイル「${audioFile}」が見つかりません`);
+            });
+        }
+
+        // 再生停止
+        function stopPlayback() {
+            if (segmentPlaybackTimeout) {
+                clearTimeout(segmentPlaybackTimeout);
+                segmentPlaybackTimeout = null;
+            }
+            
+            if (currentVideoElement) {
+                currentVideoElement.pause();
+            }
+            if (currentAudioElement) {
+                currentAudioElement.pause();
+            }
+            
+            isPlaying = false;
+            document.getElementById('playPauseBtn').textContent = '▶️ 再生';
+        }
+
+        // 再生/一時停止切り替え
+        function togglePlayPause() {
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                if (currentSegmentIndex < segments.length) {
+                    playSegment(segments[currentSegmentIndex]);
+                }
+            }
+        }
+
+        // 前のセグメントに移動
+        function previousSegment() {
+            if (currentSegmentIndex > 0) {
+                selectAndPlaySegment(currentSegmentIndex - 1);
+            }
+        }
+
+        // 次のセグメントに移動
+        function nextSegment() {
+            if (currentSegmentIndex < segments.length - 1) {
+                selectAndPlaySegment(currentSegmentIndex + 1);
+            }
+        }
+
+        // 現在のセグメントを再生
+        function playCurrentSegment() {
+            if (currentSegmentIndex < segments.length) {
+                selectAndPlaySegment(currentSegmentIndex);
+            }
+        }
+
+        // 時間表示更新
+        function updateTimeDisplay() {
+            const activeElement = currentMediaMode === 'video' ? currentVideoElement : currentAudioElement;
+            if (!activeElement) return;
+            
+            const currentTime = activeElement.currentTime;
+            const duration = activeElement.duration || 0;
+            
+            document.getElementById('timeDisplay').textContent = 
+                `${formatTime(currentTime)} / ${formatTime(duration)}`;
+            
+            const progressBar = document.getElementById('progressBar');
+            if (duration > 0) {
+                const progress = (currentTime / duration) * 100;
+                progressBar.style.width = progress + '%';
+            }
+        }
+
+        // 時間フォーマット
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // キーワードハイライト
+        function highlightKeyword(text) {
+            const keyword = document.getElementById('keywordSearch').value.trim();
+            if (!keyword) return text;
+            
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            return text.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+
+        // フィルタリング
+        function applyFilters() {
+            console.log('=== フィルタリング開始 ===');
+            const speakerFilter = document.getElementById('speakerFilter').value;
+            const emotionFilter = document.getElementById('emotionFilter').value;
+            const keywordFilter = document.getElementById('keywordSearch').value.toLowerCase().trim();
+            
+            filteredSegments = [];
+            segmentMapping = [];
+            
+            segments.forEach((segment, index) => {
+                // 話者フィルタ
+                if (speakerFilter && segment.speaker !== speakerFilter) return;
+                
+                // 感情フィルタ
+                if (emotionFilter && (!segment.emotion || !segment.emotion.includes(emotionFilter))) return;
+                
+                // キーワードフィルタ
+                if (keywordFilter && (!segment.text || !segment.text.toLowerCase().includes(keywordFilter))) return;
+                
+                filteredSegments.push(segment);
+                segmentMapping.push(index);
+            });
+            
+            console.log('フィルタ結果:', filteredSegments.length, '/', segments.length);
+            updateConversationView();
+        }
+
+        // タブ切り替え
+        function switchTab(tabName) {
+            console.log('タブ切り替え:', tabName);
+            
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // 話者フィルター設定
+        function setSpeakerFilter(speaker) {
+            console.log('話者フィルター設定:', speaker);
+            
+            // 既存のアクティブボタンをリセット
+            document.querySelectorAll('.speaker-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 新しいボタンをアクティブにする
+            document.querySelector(`[data-speaker="${speaker}"]`).classList.add('active');
+            
+            currentWordAnalysisSpeaker = speaker;
+            
+            if (currentData && wordFrequencyData && Object.keys(wordFrequencyData).length > 0) {
+                updateWordAnalysis();
+            }
+        }
+
+        // セグメント選択
+        function selectSegment(index) {
+            console.log('セグメント選択:', index);
+            if (index < 0 || index >= segments.length) return;
+            
+            currentSegmentIndex = index;
+            updateCurrentSegmentInfo();
+            
+            // Russell円環のポイントをハイライト
+            document.querySelectorAll('.russell-point').forEach(point => {
+                point.classList.remove('active');
+                if (parseInt(point.dataset.segmentIndex) === index) {
+                    point.classList.add('active');
+                }
+            });
+            
+            // 会話ビューでのハイライト
+            document.querySelectorAll('.message').forEach(msg => msg.classList.remove('active'));
+            
+            // フィルター適用時は、フィルター後のインデックスでハイライト
+            const filteredIndex = segmentMapping.indexOf(index);
+            if (filteredIndex !== -1) {
+                const messages = document.querySelectorAll('.message');
+                if (messages[filteredIndex]) {
+                    messages[filteredIndex].classList.add('active');
+                }
+            }
+        }
+
+        // 時間フォーマット
+        function formatTimeFromMs(milliseconds) {
+            const seconds = milliseconds / 1000;
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 100);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+        }
+
+        // セグメント用の音声ファイルパスを生成
+        function getSegmentAudioFile(segment) {
+            return `audio/${segment.file_id}/${segment.speaker}_${segment.start}_${segment.end}.wav`;
+        }
+
+        // メディアファイル読み込み
+        function loadMediaFiles() {
+            console.log('メディアファイル読み込み:', currentMediaMode);
+            const mediaPlayer = document.getElementById('mediaPlayer');
+            
+            if (currentMediaMode === 'video') {
+                loadVideoOnly();
+            } else {
+                loadAudioOnly();
+            }
+        }
+
+        // 動画のみ読み込み
+        function loadVideoOnly() {
+            const mediaPlayer = document.getElementById('mediaPlayer');
+            
+            if (!mediaFiles.video) {
+                mediaPlayer.innerHTML = '<div class="error-message">動画ファイルが見つかりません</div>';
+                return;
+            }
+            
+            mediaPlayer.innerHTML = '<div class="loading-indicator">📡 動画ファイルを読み込み中...</div>';
+            
+            const videoElement = document.createElement('video');
+            videoElement.src = mediaFiles.video;
+            videoElement.controls = true;
+            videoElement.preload = 'metadata';
+            videoElement.style.width = '100%';
+            videoElement.style.maxHeight = '400px';
+            
+            videoElement.addEventListener('loadstart', function() {
+                mediaPlayer.innerHTML = '';
+                mediaPlayer.appendChild(videoElement);
+            });
+            
+            videoElement.addEventListener('error', function() {
+                mediaPlayer.innerHTML = `<div class="error-message">動画ファイル読み込みエラー: ${mediaFiles.video}</div>`;
+            });
+            
+            videoElement.addEventListener('timeupdate', updateTimeDisplay);
+            
+            currentVideoElement = videoElement;
+            currentAudioElement = null;
+        }
+
+        // 音声のみ読み込み
+        function loadAudioOnly() {
+            const mediaPlayer = document.getElementById('mediaPlayer');
+            
+            const currentSegment = segments[currentSegmentIndex];
+            const audioFile = getSegmentAudioFile(currentSegment);
+            
+            mediaPlayer.innerHTML = '<div class="loading-indicator">📡 音声ファイルを読み込み中...</div>';
+            
+            const audioElement = document.createElement('audio');
+            audioElement.src = audioFile;
+            audioElement.controls = true;
+            audioElement.preload = 'metadata';
+            audioElement.style.width = '100%';
+            audioElement.style.height = '60px';
+            
+            audioElement.addEventListener('loadstart', function() {
+                mediaPlayer.innerHTML = '';
+                mediaPlayer.appendChild(audioElement);
+            });
+            
+            audioElement.addEventListener('error', function() {
+                mediaPlayer.innerHTML = `<div class="error-message">音声ファイル読み込みエラー: ${audioFile}</div>`;
+            });
+            
+            audioElement.addEventListener('timeupdate', updateTimeDisplay);
+            
+            currentVideoElement = null;
+            currentAudioElement = audioElement;
+        }
+
+        // メディアモード切り替え
+        function switchMediaMode(mode) {
+            console.log('メディアモード切り替え:', mode);
+            
+            // 現在の再生を停止
+            stopPlayback();
+            
+            currentMediaMode = mode;
+            
+            // ボタンの状態更新
+            document.getElementById('videoBtn').classList.toggle('active', mode === 'video');
+            document.getElementById('audioBtn').classList.toggle('active', mode === 'audio');
+            
+            // メディアファイル再読み込み
+            loadMediaFiles();
+        }
+
+        // コントロール有効化
+        function enableControls() {
+            document.getElementById('playPauseBtn').disabled = false;
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('playCurrentBtn').disabled = false;
+        }
+
+        // DOM読み込み完了後の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== DOM読み込み完了 - 初期化開始 ===');
+            
+            // ファイル入力のイベントリスナー
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        console.log('ファイル選択:', file.name);
+                        readJSONLFile(file);
+                    }
+                });
+            }
+            
+            // サンプルデータボタンのイベントリスナー
+            const sampleDataBtn = document.getElementById('sampleDataBtn');
+            if (sampleDataBtn) {
+                sampleDataBtn.addEventListener('click', function() {
+                    console.log('サンプルデータボタンクリック');
+                    loadSampleData();
+                });
+            }
+            
+            // メディアモードボタンのイベントリスナー
+            const videoBtn = document.getElementById('videoBtn');
+            const audioBtn = document.getElementById('audioBtn');
+            
+            if (videoBtn) {
+                videoBtn.addEventListener('click', function() {
+                    switchMediaMode('video');
+                });
+            }
+            
+            if (audioBtn) {
+                audioBtn.addEventListener('click', function() {
+                    switchMediaMode('audio');
+                });
+            }
+            
+            // コントロールボタンのイベントリスナー
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const playCurrentBtn = document.getElementById('playCurrentBtn');
+            
+            if (playPauseBtn) {
+                playPauseBtn.addEventListener('click', togglePlayPause);
+            }
+            
+            if (prevBtn) {
+                prevBtn.addEventListener('click', previousSegment);
+            }
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', nextSegment);
+            }
+            
+            if (playCurrentBtn) {
+                playCurrentBtn.addEventListener('click', playCurrentSegment);
+            }
+            
+            // 形態素解析の初期化
+            initializeMorphology();
+            
+            // 頻出語分析を確実に実行
+            setTimeout(() => {
+                console.log('遅延実行: 頻出語分析開始');
+                console.log('currentData存在:', !!currentData);
+                console.log('segments存在:', !!segments && segments.length);
+                console.log('useMorphology定義済み:', typeof useMorphology !== 'undefined', useMorphology);
+                
+                if (currentData && segments.length > 0) {
+                    try {
+                        analyzeWordFrequency();
+                    } catch (error) {
+                        console.error('頻出語分析エラー:', error);
+                    }
+                }
+            }, 1000);
+            
+            // 単語数入力のイベントリスナー
+            const wordCountInput = document.getElementById('wordCountInput');
+            if (wordCountInput) {
+                wordCountInput.addEventListener('change', function() {
+                    if (currentData) updateWordAnalysis();
+                });
+            }
+            
+            // 形態素解析切り替えボタンのイベントリスナー
+            const morphologyToggle = document.getElementById('morphologyToggle');
+            if (morphologyToggle) {
+                morphologyToggle.addEventListener('click', toggleMorphology);
+            }
+            
+            // フィルターのイベントリスナー
+            document.getElementById('speakerFilter').addEventListener('change', applyFilters);
+            document.getElementById('emotionFilter').addEventListener('change', applyFilters);
+            document.getElementById('keywordSearch').addEventListener('input', applyFilters);
+            
+            // キーボードショートカット
+            document.addEventListener('keydown', function(e) {
+                if (!currentData) return;
+                
+                switch(e.key) {
+                    case ' ':
+                        e.preventDefault();
+                        togglePlayPause();
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        previousSegment();
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        nextSegment();
+                        break;
+                    case 'Escape':
+                        stopPlayback();
+                        break;
+                }
+            });
+            
+            console.log('=== 初期化完了 ===');
+        });
+        
+        // グローバル関数（HTMLから呼ばれる）
+        window.switchTab = switchTab;
+        window.selectAndPlaySegment = selectAndPlaySegment;
+    </script>
+</body>
+</html>
+
+
