@@ -169,8 +169,8 @@ Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
 ### 8. Usage Tips
 - For identifying areas with large emotion changes, Russell tab's circumplex model is effective
 - For emotion analysis with specific keywords, utilize the search function in conversation view
-- Comprehensive review of multimodal analysis results (audio, video, text) provides deeper insights
-
+- By comprehensively reviewing the analysis results for each modality (audio, video, and text), you can gain deeper insights
+- 
 ### 9. Notes
 - Loading may take time due to large file sizes
 - Recommended browser is Google Chrome
