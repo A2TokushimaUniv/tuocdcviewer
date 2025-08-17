@@ -1,7 +1,8 @@
 # tuocdcviewer
 Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
 (Base development powered by Claude)
-[Japanese version](https://github.com/A2TokushimaUniv/tuocdcviewer/edit/main/README_ja.md)
+
+[Japanese version](https://github.com/A2TokushimaUniv/tuocdcviewer/blob/main/README_ja.md)
 
 ## Setup
 - Place the audio and video directories in the same location as the HTML file (TU-OCDC-viewer-ver1.html)
