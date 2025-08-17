@@ -1,6 +1,12 @@
+<div align="center">
+
+![TU-OCDC Viewer Logo](./logo/tuocdc_logo.svg)
+
 # tuocdcviewer
 徳島大学オンラインカウンセリング対話コーパス(TU-OCDC)ビューア
 （基盤部分の開発にClaudeを使用）
+
+</div>
 
 [英語版](https://github.com/A2TokushimaUniv/tuocdcviewer/blob/main/README.md)
 
