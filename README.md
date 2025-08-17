@@ -56,13 +56,12 @@ Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
 - Progress bar for checking and navigating playback position
 
 #### Control Buttons
-- **Forward**: Move to next segment
+- **Video**: Video display mode
 - **Audio**: Audio-only display mode
-- **Backward**: Return to previous segment
-- **Previous/Next Segment**: Navigate between segments
-- **Next Segment**: Advance to next segment
-- **Delete Current Segment**: Skip current segment
-- **Start/End**: Navigate to session start/end points
+- **Previous segment**: Return to the previous segment
+- **Next Segment**: Move to the next segment
+- **Previous/Next Segments**: Move between segments
+- **Play Current Segment**: Play the selected segment in the conversation view
 
 ### 4. Conversation View Features
 
