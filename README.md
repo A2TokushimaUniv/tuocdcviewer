@@ -1,6 +1,6 @@
 <div align="center">
 
-![TU-OCDC Viewer Logo](./logo/tuocdc-logo.svg)
+![TU-OCDC Viewer Logo](./logo/tuocdc_logo.svg)
 
 # tuocdcviewer
 Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
