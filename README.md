@@ -1,10 +1,13 @@
 <div align="center">
-![TU-OCDC Viewer Logo](./logo/tuocdc-viewer-logo.svg)
-</div>
+
+![TU-OCDC Viewer Logo](./logo/tuocdc-logo.svg)
 
 # tuocdcviewer
 Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
+
 (Base development powered by Claude)
+
+</div>
 
 [Japanese version](https://github.com/A2TokushimaUniv/tuocdcviewer/blob/main/README_ja.md)
 
