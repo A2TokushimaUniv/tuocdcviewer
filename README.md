@@ -113,10 +113,10 @@ Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
   - Displays positive/negative polarity numerically
 
 ![Emotion Output Tab - Detailed Emotion Analysis](./screenshots/page12.png)
-*Figure 10: Emotion output tab - Emotion cluster analysis and utterance content display*
+*Figure 10: Emotion output tab - Display of phrases appearing in each emotional domain*
 
 ![Emotion Output Tab - Emotion Distribution](./screenshots/page13.png)
-*Figure 11: Emotion output tab - Detailed emotion distribution visualization*
+*Figure 11: Emotion output tab - Visualization of frequently used keywords in each emotional domain (morphologically analyzed)*
 
 #### Head Orientation (Pitch, Roll, Yaw)
 - Visualizes participant's head movements in 3 axes
