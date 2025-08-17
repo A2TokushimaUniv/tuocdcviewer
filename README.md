@@ -79,7 +79,7 @@ Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
 - Shows distribution by emotion categories with color coding
 
 ![Overview Tab - Emotion Timeline](./screenshots/page7.png)
-*Figure 5: Overview tab - Emotion time series changes and control buttons*
+*Figure 5: Overview tab - Summary information on emotions and stress*
 
 #### Russell Tab
 - Displays emotion distribution based on Russell's circumplex model of emotion
