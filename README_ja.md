@@ -2,6 +2,8 @@
 徳島大学オンラインカウンセリング対話コーパス(TU-OCDC)ビューア
 （基盤部分の開発にClaudeを使用）
 
+[英語版](https://github.com/A2TokushimaUniv/tuocdcviewer/blob/main/README.md)
+
 ## 準備
 - audioディレクトリとvideoディレクトリをHTMLファイル(TU-OCDC-viewer-ver1.html)と同じ場所に配置
 - jsonl_gpt4_emoまたはjsonl_reazonv2_emoを解凍し、上記と同じ場所に配置
