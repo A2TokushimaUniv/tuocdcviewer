@@ -98,15 +98,15 @@ Tokushima University Online Counseling Dialogue Corpus (TU-OCDC) Viewer
 ![Russell Detailed View](./screenshots/page9.png)
 *Figure 7: Russell analysis screen - More detailed emotion circumplex display*
 
-#### Details Tab
+#### Time series change Tab
 - Displays more detailed emotion analysis results in graph format
 - Confirms time series changes of multiple emotion indicators
 
-![Details Tab - Emotion Timeline Graph](./screenshots/page10.png)
-*Figure 8: Details tab - Detailed emotion timeline graph*
+![Time series change Tab - Emotion Timeline Graph](./screenshots/page10.png)
+*Figure 8: Time series change tab - Detailed emotion timeline graph*
 
-![Details Tab - Interactive Display](./screenshots/page11.png)
-*Figure 9: Details tab - Detailed information via hover display*
+![Time series change Tab - Interactive Display](./screenshots/page11.png)
+*Figure 9: Time series change tab - Detailed information via hover display*
 
 #### Emotion Output Tab
 - **Facial Emotion Expression (7 Basic Emotions)**: 
